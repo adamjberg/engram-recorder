@@ -10,7 +10,7 @@ try {
     .getUserMedia(audioIN)
     .then(function (mediaStreamObj) {
       btnRecord.addEventListener("click", function (ev) {
-        btnRecord.classList.toggle("btn-record__recording");
+        btnRecord.classList.toggle("recording");
         if (recording) {
           stopRecording();
         } else {
