@@ -51,12 +51,15 @@ function startRecording(mediaStreamObj) {
     const audio = document.createElement("audio");
 
     audio.setAttribute("controls", "");
+    audio.addEventListener("click", function(e) {
+      e.stopPropagation();
+    });
 
     clipContainer.appendChild(audio);
     clipList.appendChild(clipContainer);
 
     audio.controls = true;
-    const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
     chunks = [];
     const audioURL = URL.createObjectURL(blob);
     audio.src = audioURL;
