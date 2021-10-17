@@ -1,0 +1,15 @@
+{
+  "background_color": "black",
+  "description": "Quickly record your thoughts"
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "icon/fox-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "name": "engram recorder",
+  "short_name": "engram recorder",
+  "start_url": "/"
+}

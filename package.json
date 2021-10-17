@@ -1,0 +1,13 @@
+{
+  "name": "recorder",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild app.ts --bundle --outfile=public/app.js",
+    "dev": "yarn build --servedir=public"
+  },
+  "dependencies": {
+    "esbuild": "^0.13.8"
+  }
+}
