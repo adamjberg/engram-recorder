@@ -15,6 +15,41 @@
 body {
   margin: 0;
   background-color: black;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+#content {
+  position: absolute;
+  top: 0;
+  bottom: 131px;
+  overflow-y: scroll;
+  width: 100%;
+}
+
+#clip-list {
+
+}
+
+#clip-list .clip {
+  border-bottom: 1px solid white;
+  padding: 20px 20px;
+}
+
+#clip-list .clip-label {
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.clip audio {
+  display: none;
+  width: 100%;
+}
+
+.clip__selected audio {
+  display: block;
 }
 
 #footer {
@@ -22,7 +57,6 @@ body {
   bottom: 0;
   width: 100%;
   padding: 40px 0;
-  #background-color: #424242;
   border-top: 1px solid white;
 }
 
@@ -43,6 +77,9 @@ body {
 
 <body>
   <noscript>Please enable JavaScript in your web browser to view this page.</noscript>
+  <div id="content">
+    <div id="clip-list"></div>
+  </div>
   <div id="footer">
     <div id="btn-record">
     </div>
