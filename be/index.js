@@ -27,13 +27,13 @@ const upload = multer({
     s3: s3,
     bucket: BUCKET,
     metadata: function (req, file, cb) {
-      console.log(file)
       cb(null, { fieldName: file.fieldname });
     },
     key: function (req, file, cb) {
+      const fileExt = path.extname(file.originalname);
       cb(
         null,
-        `engram/uploads/5fa634ca7fd6d6c5e4eb1fb6/${Date.now().toString()}.jpg`
+        `engram/uploads/5fa634ca7fd6d6c5e4eb1fb6/${Date.now().toString()}${fileExt}`
       );
     },
   }),
