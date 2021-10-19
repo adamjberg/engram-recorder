@@ -1,3 +1,42 @@
+let loggedIn = false;
+const btnLogin = document.getElementById("btn-login");
+
+fetch("/api/users/self").then(function(res) {
+  return res.json();
+}).then((jsonData) => {
+  if (jsonData.data._id) {
+    setLoggedIn(true);
+  }
+})
+
+function setLoggedIn(loggedIn) {
+  if (loggedIn) {
+    btnLogin.remove();
+  }
+}
+
+btnLogin.addEventListener("click", function () {
+  const username = prompt("Username");
+  const password = prompt("Password");
+
+  fetch("/api/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+      password,
+    }),
+  }).then((res) => {
+    if (res.status === 200) {
+      setLoggedIn(true);
+    }
+  }).catch((err) => {
+    alert(err.message);
+  });
+});
+
 let audioIN = { audio: true };
 
 let recording = false;
@@ -60,6 +99,9 @@ function startRecording(mediaStreamObj) {
 
     audio.controls = true;
     const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+
+
+
     chunks = [];
     const audioURL = URL.createObjectURL(blob);
     audio.src = audioURL;
