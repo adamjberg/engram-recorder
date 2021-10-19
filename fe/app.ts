@@ -163,6 +163,7 @@ function createClipElement({ clipName, audioURL }) {
 
   clipContainer.appendChild(audio);
 
+  audio.setAttribute("preload", "none");
   audio.controls = true;
   audio.src = audioURL;
   return clipContainer;
