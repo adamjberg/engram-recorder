@@ -64,14 +64,10 @@ async function setToken(res, user) {
 }
 
 app.get("/api/users/self", async function (req, res, next) {
-  const { db, user } = req;
-  const userDoc = await db.collection("users").findOne({
-    _id: ObjectId(user),
-  });
+  const { user } = req;
   return res.json({
     data: {
-      _id: user,
-      email: userDoc.email,
+      _id: user
     },
   });
 });
