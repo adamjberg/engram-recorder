@@ -33,7 +33,7 @@ function setRecordings(arrRecordings) {
 
   for (const recording of recordings) {
     clipList.appendChild(createClipElement({
-      clipName: recording._id,
+      clipName: new Date(recording.createdAt).toLocaleDateString(),
       audioURL: recording.signedUrl
     }))
   }
