@@ -1,11 +1,11 @@
 import aws from "aws-sdk";
 import { ObjectId } from "mongodb";
-import bcrypt from 'bcrypt'; 
+import bcrypt from "bcrypt";
 import express from "express";
 import multer from "multer";
 import multerS3 from "multer-s3";
 import path from "path";
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 import { DatabaseMiddleware } from "./middleware/DatabaseMiddleware.js";
 import { getEnv } from "./env.js";
 import jwt from "jsonwebtoken";
@@ -63,17 +63,17 @@ async function setToken(res, user) {
   });
 }
 
-app.get("/api/users/self", async function(req, res, next) {
+app.get("/api/users/self", async function (req, res, next) {
   const { db, user } = req;
   const userDoc = await db.collection("users").findOne({
-    _id: ObjectId(user)
+    _id: ObjectId(user),
   });
   return res.json({
     data: {
       _id: user,
-      email: userDoc.email
-    }
-  })
+      email: userDoc.email,
+    },
+  });
 });
 
 app.post("/api/login", async function (req, res, next) {
@@ -111,89 +111,95 @@ app.post("/api/login", async function (req, res, next) {
   }
 });
 
-app.get("/api/recordings", AuthRequiredMiddleware, async function(req, res, next) {
-  const { db, user, query: { beforeId, afterId } } = req;
+app.get(
+  "/api/recordings",
+  AuthRequiredMiddleware,
+  async function (req, res, next) {
+    const { db, user } = req;
 
-  const findOptions = {
-    user: new ObjectId(user),
-    type: "recording",
-  }
+    const findOptions = {
+      user: new ObjectId(user),
+      type: "recording",
+    };
 
-  let sort = {
-    _id:  -1
-  }
-
-  if (beforeId) {
-    findOptions._id = {
-      $lt: new ObjectId(beforeId)
+    const recordings = await db
+      .collection("notes")
+      .find(findOptions)
+      .sort({ _id: -1 })
+      .limit(100)
+      .toArray();
+    if (!recordings.length) {
+      return res.sendStatus(404);
     }
-  } else if(afterId) {
-    findOptions._id = {
-      $gt: new ObjectId(afterId)
-    }
-    sort = {
-      _id: 1
-    }
+
+    const recordingsWithSignedUrl = recordings.map((recording) => {
+      const signedUrlExpireSeconds = 60 * 5;
+      const url = s3.getSignedUrl("getObject", {
+        Bucket: BUCKET,
+        Key: recording.key,
+        Expires: signedUrlExpireSeconds,
+      });
+      return {
+        ...recording,
+        signedUrl: url,
+      };
+    });
+
+    return res.json({
+      data: recordingsWithSignedUrl,
+    });
   }
+);
 
-  const recordings = await db.collection("notes").find(findOptions).sort(sort).limit(1).toArray();
-  if (!recordings.length) {
-    return res.sendStatus(404)
+app.get(
+  "/api/recordings/:id",
+  AuthRequiredMiddleware,
+  async function (req, res, next) {
+    const {
+      db,
+      user,
+      params: { id },
+    } = req;
+
+    const findOptions = {
+      _id: new ObjectId(id),
+      user: new ObjectId(user),
+      type: "recording",
+    };
+    const recording = await db.collection("notes").findOne(findOptions);
+
+    return res.json({
+      data: recording,
+    });
   }
+);
 
-  const recording = recordings.length ? recordings[0] : null;
+app.post(
+  "/api/recordings",
+  AuthRequiredMiddleware,
+  upload.single("recording"),
+  async function (req, res, next) {
+    const { db, user } = req;
+    const recording = await db.collection("notes").insertOne({
+      user: new ObjectId(user),
+      type: "recording",
+      key: req.file.key,
+      url: req.file.location,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-  const signedUrlExpireSeconds = 60 * 5;
-  const url = s3.getSignedUrl('getObject', {
-      Bucket: BUCKET,
-      Key: recording.key,
-      Expires: signedUrlExpireSeconds
-  })
-
-  return res.json({
-    data: {
-      ...recording,
-      signedUrl: url
-    }
-  })
-});
-
-app.get("/api/recordings/:id", AuthRequiredMiddleware, async function(req, res, next) {
-  const { db, user, params: { id } } = req;
-
-  const findOptions = {
-    _id: new ObjectId(id),
-    user: new ObjectId(user),
-    type: "recording",
+    return res.json({
+      success: true,
+      data: recording,
+    });
   }
-  const recording = await db.collection("notes").findOne(findOptions);
-
-  return res.json({
-    data: recording
-  })
-});
-
-app.post("/api/recordings", AuthRequiredMiddleware, upload.single("recording"), async function (req, res, next) {
-  const { db, user } = req;
-  const recording = await db.collection("notes").insertOne({
-    user: new ObjectId(user),
-    type: "recording",
-    key: req.file.key,
-    url: req.file.location,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  });
-
-  return res.json({
-    success: true,
-    data: recording
-  });
-});
+);
 
 app.use(express.static("../fe/public"));
-app.get("*", function(req, res, next) {
+app.get("*", function (req, res, next) {
   res.sendFile(path.resolve("../fe/public/index.html"));
-})
+});
 
 app.listen(3005, function () {
   console.log("Server listening on port 3005.");

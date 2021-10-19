@@ -1,19 +1,41 @@
 import mime from "mime";
 
+let recordings = [];
 let loggedIn = false;
 const btnLogin = document.getElementById("btn-login");
 
-fetch("/api/users/self").then(function(res) {
-  return res.json();
-}).then((jsonData) => {
-  if (jsonData.data._id) {
-    setLoggedIn(true);
-  }
-})
+fetch("/api/users/self")
+  .then(function (res) {
+    return res.json();
+  })
+  .then((jsonData) => {
+    if (jsonData.data._id) {
+      setLoggedIn(true);
+    }
+  });
 
 function setLoggedIn(loggedIn) {
   if (loggedIn) {
     btnLogin.remove();
+
+    fetch("/api/recordings")
+      .then((res) => res.json())
+      .then((jsonData) => {
+        const recordings = jsonData.data;
+        setRecordings(recordings);
+      });
+  }
+}
+
+function setRecordings(arrRecordings) {
+  recordings = arrRecordings;
+  clipList.innerHTML = "";
+
+  for (const recording of recordings) {
+    clipList.appendChild(createClipElement({
+      clipName: recording._id,
+      audioURL: recording.signedUrl
+    }))
   }
 }
 
@@ -30,13 +52,15 @@ btnLogin.addEventListener("click", function () {
       username,
       password,
     }),
-  }).then((res) => {
-    if (res.status === 200) {
-      setLoggedIn(true);
-    }
-  }).catch((err) => {
-    alert(err.message);
-  });
+  })
+    .then((res) => {
+      if (res.status === 200) {
+        setLoggedIn(true);
+      }
+    })
+    .catch((err) => {
+      alert(err.message);
+    });
 });
 
 let audioIN = { audio: true };
@@ -77,47 +101,29 @@ function startRecording(mediaStreamObj) {
       clipName = new Date().toLocaleDateString();
     }
 
-    const clipContainer = document.createElement("div");
-    clipContainer.classList.add("clip");
-
-    clipContainer.addEventListener("click", function () {
-      clipContainer.classList.toggle("clip__selected");
-    });
-
-    const clipLabel = document.createElement("div");
-    clipLabel.classList.add("clip-label");
-    clipLabel.innerHTML = clipName;
-    clipContainer.appendChild(clipLabel);
-
-    const audio = document.createElement("audio");
-
-    audio.setAttribute("controls", "");
-    audio.addEventListener("click", function(e) {
-      e.stopPropagation();
-    });
-
-    clipContainer.appendChild(audio);
-    clipList.appendChild(clipContainer);
-
-    audio.controls = true;
     const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
     const formData = new FormData();
-    const file = new File([blob], "recording." + mime.getExtension(mediaRecorder.mimeType));
+    const file = new File(
+      [blob],
+      "recording." + mime.getExtension(mediaRecorder.mimeType)
+    );
     formData.append("recording", file);
+
+    chunks = [];
+    const audioURL = URL.createObjectURL(blob);
+    clipList.appendChild(createClipElement({ clipName, audioURL }));
 
     const postImageRes = fetch("/api/recordings", {
       method: "POST",
       body: formData,
-    }).then(function (res) {
-      return postImageRes.json()
-    }).then(function (jsonData) {
-      console.log(jsonData);
-    });
-
-    chunks = [];
-    const audioURL = URL.createObjectURL(blob);
-    audio.src = audioURL;
+    })
+      .then(function (res) {
+        return postImageRes.json();
+      })
+      .then(function (jsonData) {
+        console.log(jsonData);
+      });
   };
 
   mediaRecorder.ondataavailable = function (e) {
@@ -133,4 +139,31 @@ function stopRecording() {
   if (mediaRecorder) {
     mediaRecorder.stop();
   }
+}
+
+function createClipElement({ clipName, audioURL }) {
+  const clipContainer = document.createElement("div");
+  clipContainer.classList.add("clip");
+
+  clipContainer.addEventListener("click", function () {
+    clipContainer.classList.toggle("clip__selected");
+  });
+
+  const clipLabel = document.createElement("div");
+  clipLabel.classList.add("clip-label");
+  clipLabel.innerHTML = clipName;
+  clipContainer.appendChild(clipLabel);
+
+  const audio = document.createElement("audio");
+
+  audio.setAttribute("controls", "");
+  audio.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
+  clipContainer.appendChild(audio);
+
+  audio.controls = true;
+  audio.src = audioURL;
+  return clipContainer;
 }
