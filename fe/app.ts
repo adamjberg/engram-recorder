@@ -112,7 +112,7 @@ function startRecording(mediaStreamObj) {
 
     chunks = [];
     const audioURL = URL.createObjectURL(blob);
-    clipList.appendChild(createClipElement({ clipName, audioURL }));
+    clipList.prepend(createClipElement({ clipName, audioURL }));
 
     const postImageRes = fetch("/api/recordings", {
       method: "POST",
