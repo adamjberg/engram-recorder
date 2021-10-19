@@ -8,6 +8,7 @@
     "dev": "yarn build --servedir=public"
   },
   "dependencies": {
-    "esbuild": "^0.13.8"
+    "esbuild": "^0.13.8",
+    "mime": "^2.5.2"
   }
 }

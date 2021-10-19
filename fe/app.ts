@@ -1,3 +1,5 @@
+import mime from "mime";
+
 let loggedIn = false;
 const btnLogin = document.getElementById("btn-login");
 
@@ -100,7 +102,18 @@ function startRecording(mediaStreamObj) {
     audio.controls = true;
     const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
+    const formData = new FormData();
+    const file = new File([blob], "recording." + mime.getExtension(mediaRecorder.mimeType));
+    formData.append("recording", file);
 
+    const postImageRes = fetch("/api/recordings", {
+      method: "POST",
+      body: formData,
+    }).then(function (res) {
+      return postImageRes.json()
+    }).then(function (jsonData) {
+      console.log(jsonData);
+    });
 
     chunks = [];
     const audioURL = URL.createObjectURL(blob);
